@@ -6,3 +6,4 @@ Copyright (c) 2018/8/30.
 @author: ogc
 """
 _NULL_STR=''
+_SEQ2='\n'

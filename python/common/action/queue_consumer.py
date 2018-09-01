@@ -36,7 +36,6 @@ class Consumer(threading.Thread):
                 start_time = time.clock()
                 re = action.action()
                 end_time = time.clock()
-
                 work_time = int(round(end_time - start_time))
                 self.rl.info(("queue name %s finish,sleep time %s \'s,action time %s \'s"
                               "action retry %s times,result:%s") % \

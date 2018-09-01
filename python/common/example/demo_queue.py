@@ -18,6 +18,7 @@ class OGCConsumerAction(base_consumer_action.ConsumerAction):
         result=True
         r_test=''
         try:
+            #这里是消费动作
             r_test="OGC"+str(self.text)
         except:
             result=False
