@@ -91,4 +91,4 @@ class HtmlUtil:
 
 if __name__=='__main__':
     f=HtmlUtil()
-    # print f.get_url_host("http://www.baidu.com//123/tmp/11.img")
+    print f.get_url_host("http://www.baidu.com//123/tmp/11.img")

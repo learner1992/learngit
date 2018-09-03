@@ -6,8 +6,8 @@ Copyright (c) 2018/9/1.
 @author: ogc
 """
 import urllib2, urllib,cookielib,threading,gzip,sys
-from python.common.util import content
-from StringIO import StringIO
+# from python.common.util import content
+# from StringIO import StringIO
 from selenium.webdriver import PhantomJS
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
@@ -130,8 +130,9 @@ if __name__ == '__main__':
     reload(sys)
     sys.setdefaultencoding('utf-8')
     r = RequestUtil()
-    # rget = r.http_get('http://mil.news.sina.com.cn/china/2017-06-30/doc-ifyhrxsk1462288.shtml')
-    # open = rget[0]
+    rget = r.http_get('http://mil.news.sina.com.cn/china/2017-06-30/doc-ifyhrxsk1462288.shtml')
+    print rget
+    open = rget[0]
     # if open.info().get('Content-Encoding') == 'gzip':
     #     buf = StringIO(open.read())
     #     gz = gzip.GzipFile(fileobj=buf)
@@ -146,7 +147,8 @@ if __name__ == '__main__':
     # f.write_file_content_pattern("C:\user\hainiu\hainiu_cralwer\html1",prit_str,pattern="a")
     #
     # print prit_str
-    html =  r.http_get_phandomjs('http://mil.news.sina.com.cn/china/2017-06-30/doc-ifyhrxsk1462288.shtml')
-    html = html.decode('utf-8').encode(sys.getfilesystemencoding())
-    print html
-    r.close_phandomjs()
+
+    # html =  r.http_get_phandomjs('http://mil.news.sina.com.cn/china/2017-06-30/doc-ifyhrxsk1462288.shtml')
+    # html = html.decode('utf-8').encode(sys.getfilesystemencoding())
+    # print html
+    # r.close_phandomjs()
