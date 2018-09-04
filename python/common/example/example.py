@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 from python.common.util.request_util import RequestUtil
 from python.common.util.html_util import HtmlUtil
 from python.common.util.util import Util
+from lxml import etree
 
 def test_beautiful():
     # url='http://roll.news.qq.com'
@@ -26,6 +27,8 @@ def test_beautiful():
     u=Util()
     print "domain:",domain,":host:",host
     soup=BeautifulSoup(html,'lxml')
+
+    print hu.get_doc_charset(etree.HTML(html)),"###################3"
     a_docs=soup.find_all("a")
     for a in a_docs:
         a_href=get_format_url(url,a,host)

@@ -91,4 +91,11 @@ class HtmlUtil:
 
 if __name__=='__main__':
     f=HtmlUtil()
-    print f.get_url_host("http://www.baidu.com//123/tmp/11.img")
+    print f.get_url_host("http://www.autohome.com.cn/all")
+    print f.get_url_host("https://topic.autohome.com.cn/new/marketing/2018/3/qx60")
+    from tld import get_fld
+    a=get_fld("http://www.autohome.com.cn/all")
+    b=get_fld("https://topic.autohome.com.cn/new/marketing/2018/3/qx60")
+    print a,b,a==b
+    # print f.get_dom_parent_xpath_js("这里的参数是dom")
+

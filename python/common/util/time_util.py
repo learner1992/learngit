@@ -89,12 +89,21 @@ if __name__ == "__main__":
     print a.now_hour_utc()
     print a.get_dif_day_utc()
     print a.get_dif_hour_utc()
-    print a.get_dif_time(hour=0,minute=-10,format='%Y-%m-%d')
-    print a.get_dif_time(hour=0,minute=-10,format='%Y-%m-%d %H:%M:00')
+    print "###"
+    print a.get_dif_time(hour=0,minute=-10,format='%Y-%m-%d %H')
+    print a.get_dif_time(hour=-1,minute=-10,format='%Y-%m-%d %H:%M:00')
     print a.now_time(format='%Y-%m-%d %H:%M:00')
     print a.str2timestamp('2016-12-14 04:45:52')
     print a.timestamp2str(1481661952)
     print a.get_dif_time_str('2018-04-12 14:44:00',-24)
+    last_crawl_time="2018-09-02 23:31:28"
+    # if int(a.str2timestamp(str=last_crawl_time, format='%Y-%m-%d %H')) <= int(
+    #         a.str2timestamp(a.get_dif_time(hour=-1, format='%Y-%m-%d %H'))):
+    #     print '时间相等'
+    # else:
+    print last_crawl_time[:13]
+    print a.str2timestamp(last_crawl_time[:12], '%Y-%m-%d %H')
+    print int(a.str2timestamp(a.get_dif_time(hour=-1, format='%Y-%m-%d %H'),format='%Y-%m-%d %H'))
 
 
 
