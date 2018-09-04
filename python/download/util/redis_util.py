@@ -47,7 +47,7 @@ class RedisUtil(object):
         """
         批量获取keys
         :param pattern:
-        :param limit:
+        :param limit:获取前limit条中符合条件的
         :param cursor:
         :return:
         """
@@ -93,11 +93,41 @@ class RedisUtil(object):
 if __name__=='__main__':
     reload(sys)
     sys.setdefaultencoding('utf-8')
-    g=RedisUtil()
-    dicts={'key1':11,'key2':22,'key3':'你好'}
-    s=g.set_batch_datas(dicts)
-    print s
-    list=['key1','key2','key3']
-    dd=g.get_values_batch_keys(list)
-    print dd
+    # g=RedisUtil()
+    # dicts={'key1':11,'key2':22,'key3':'你好'}
+    # s=g.set_batch_datas(dicts)
+    # print s
+    # list=['key1','key2','key3']
+    # dd=g.get_values_batch_keys(list)
+    # print dd
+    redis_conn = RedisUtil().get_conn()
+    redis = RedisUtil()
+    print redis.get_value_for_key("down:9ea8932ebd6f148e5c24513d5d8cafb4")
+    # sum=0
+    # for i in range(12):
+    #     s=redis.kyes_limit_scan(pattern='*', limit=1,cursor=i)
+    #     print len(s),s
+    #     sum+=len(s)
+    # print sum
+    # while True:
+    #     redis_list = redis.get_values_batch_keys("down*")
+    #     print redis_list
+    #     if redis_list.__len__()==0:
+    #         break
+    #     for each in redis_list:
+    #         print each[5:]
+    #     print len(redis.get_values_batch_keys(redis_list))
+    redis_len = len(redis.get_conn().keys())
+    page_size = 10
+    page_num = redis_len / page_size
+    print redis_len,page_num
+    for i in range(0, page_num):
+        redis_key = redis.kyes_limit_scan(pattern="exist*", limit=page_size*(i+1), cursor=0)
+        print redis_key.__len__(),redis_key
+    # print redis.keys_limit_scan(pattern='*', limit=1, cursor=1)
+
+
+    # print len(redis_conn.keys("down*"))
+
+
 

@@ -46,6 +46,7 @@ def call_beautiful(url):
         a_href=get_format_url(url,a,host,charset)
         if a_href and a.text:
             print a.text
+            print a_href
             xpath=hu.get_dom_parent_xpath_js(a)
             create_time=int(t.str2timestamp(t.now_time()))
             create_day=int(t.now_day().replace("-",""))
@@ -60,7 +61,7 @@ def call_beautiful(url):
                 print redis_conn.keys(key1)
                 if not redis_conn.keys(key1):
                     key2="down:"+u.get_md5(a_href)
-                    dicts = {key1:url, key2:url}
+                    dicts = {key1:a_href, key2:a_href}
                     redis.set_batch_datas(dicts)
                     #同时写入mysql-internal数据库保存信息
                     try:
