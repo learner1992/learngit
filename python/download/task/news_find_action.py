@@ -42,31 +42,31 @@ def call_beautiful(url):
     print "domain:",domain,":host:",host
     soup=BeautifulSoup(html,'lxml')
     a_docs=soup.find_all("a")
-    for a in a_docs:
-        a_href=get_format_url(url,a,host,charset)
-        if a_href and a.text:
-            print a.text
-            print a_href
-            xpath=hu.get_dom_parent_xpath_js(a)
-            create_time=int(t.str2timestamp(t.now_time()))
-            create_day=int(t.now_day().replace("-",""))
-            create_hour=int(t.now_hour())
-            update_time=int(t.str2timestamp(t.now_time()))
-            if get_fld(a_href)==domain:
+    sql = ''
+    try:
+        db = DBUtil(config._OGC_DB)
+        for a in a_docs:
+            a_href=get_format_url(url,a,host,charset)
+            if a_href and a.text:
+                print a.text
                 print a_href
-                #说明是内链接，写入redis数据库
-                redis_conn=RedisUtil().get_conn()
-                redis=RedisUtil()
-                key1="exist:"+u.get_md5(a_href)
-                print redis_conn.keys(key1)
-                if not redis_conn.keys(key1):
-                    key2="down:"+u.get_md5(a_href)
-                    dicts = {key1:a_href, key2:a_href}
-                    redis.set_batch_datas(dicts)
-                    #同时写入mysql-internal数据库保存信息
-                    try:
-                        sql=''
-                        db=DBUtil(config._OGC_DB)
+                xpath=hu.get_dom_parent_xpath_js(a)
+                create_time=int(t.str2timestamp(t.now_time()))
+                create_day=int(t.now_day().replace("-",""))
+                create_hour=int(t.now_hour())
+                update_time=int(t.str2timestamp(t.now_time()))
+                if get_fld(a_href)==domain:
+                    print a_href
+                    #说明是内链接，写入redis数据库
+                    redis_conn=RedisUtil().get_conn()
+                    redis=RedisUtil()
+                    key1="exist:"+u.get_md5(a_href)
+                    print redis_conn.keys(key1)
+                    if not redis_conn.keys(key1):
+                        key2="down:"+u.get_md5(a_href)
+                        dicts = {key1:a_href, key2:a_href}
+                        redis.set_batch_datas(dicts)
+                        #同时写入mysql-internal数据库保存信息
                         insert_internal_sql="""
                         insert into hainiu_web_seed_internally (url,md5,param,domain,host,a_url,a_md5,
                         a_host,a_xpath,a_title,create_time,create_day,create_hour,update_time) 
@@ -76,31 +76,24 @@ def call_beautiful(url):
                         sql=insert_internal_sql %(url,u.get_md5(url),"{title:"+a.text+"}",domain,host,a_href,u.get_md5(a_href),
                                                   hu.get_url_host(a_href),xpath,a.text,create_time,create_day,create_hour,update_time)
                         db.execute(sql)
-                    except:
-                        rl.exception()
-                        rl.error(sql)
-                        db.rollback()
-                    finally:
-                        db.close()
-            else:
-                #外连接写入mysql数据库，因为这部分只写，不会爬取
-                db=DBUtil(config._OGC_DB)
-                insert_external_sql="""
-                insert into hainiu_web_seed_externally (url,md5,param,domain,host,a_url,a_md5,
-                        a_host,a_xpath,a_title,create_time,create_day,create_hour,update_time) 
-                        values("%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s") on duplicate key update update_time=update_time +1;
-                        """
-                sql = insert_external_sql % (url,u.get_md5(url),"{title:"+a.text+"}",domain,host,a_href,u.get_md5(a_href),
-                                                  hu.get_url_host(a_href),xpath,a.text,create_time,create_day,create_hour,update_time)
-                try:
+                else:
+                    #外连接写入mysql数据库，因为这部分只写，不会爬取
+                    insert_external_sql="""
+                    insert into hainiu_web_seed_externally (url,md5,param,domain,host,a_url,a_md5,
+                            a_host,a_xpath,a_title,create_time,create_day,create_hour,update_time) 
+                            values("%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s") on duplicate key update update_time=update_time +1;
+                            """
+                    sql = insert_external_sql % (url,u.get_md5(url),"{title:"+a.text+"}",domain,host,a_href,u.get_md5(a_href),
+                                                 hu.get_url_host(a_href),xpath,a.text,create_time,create_day,create_hour,update_time)
                     db.execute(sql)
-                except:
-                    rl.exception()
-                    rl.error(sql)
-                    db.rollback()
-                finally:
-                    db.close()
-            # print a_href,'_',xpath,u.get_md5(xpath)
+                # print a_href,'_',xpath,u.get_md5(xpath)
+    except:
+        rl.exception()
+        rl.error(sql)
+        db.rollback()
+    finally:
+        db.close()
+
 
 
 def get_format_url(url, a_doc, host,charset='utf-8'):
