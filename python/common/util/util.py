@@ -27,7 +27,7 @@ class Util:
         elif plat=='Linux':
             import socket,fcntl,struct
             s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-            ip=socket.inet_ntoa(fcntl.ioctl(s.fileno(),0x8915,struct.pack('256s','enp4s0f1'[:15]))[20:24])
+            ip=socket.inet_ntoa(fcntl.ioctl(s.fileno(),0x8915,struct.pack('256s','ens33'[:15]))[20:24])
         return ip
     def get_md5(self,str):
         md5=hashlib.md5()
@@ -46,4 +46,4 @@ class Util:
         return rs
 
 if __name__=="__main__":
-    pass
+    print Util().get_local_ip()

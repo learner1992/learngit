@@ -51,7 +51,7 @@ if __name__=='__main__':
         print k.push_message("ogc")
     #这里不睡眠就会报弱引用被回收问题，但是因为程序在集群上面是24小时运行的
     #所以对象会被把持住，不会被gc回收
-    time.sleep(10)
+    # time.sleep(10)
 
 
 

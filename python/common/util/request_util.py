@@ -148,7 +148,7 @@ if __name__ == '__main__':
     #
     # print prit_str
 
-    # html =  r.http_get_phandomjs('http://mil.news.sina.com.cn/china/2017-06-30/doc-ifyhrxsk1462288.shtml')
-    # html = html.decode('utf-8').encode(sys.getfilesystemencoding())
-    # print html
-    # r.close_phandomjs()
+    html =  r.http_get_phandomjs('http://sports.sina.com.cn/basketball/nba/2018-09-04/doc-ihiixzkm4373246.shtml')
+    html = html.decode('utf-8').encode(sys.getfilesystemencoding())
+    print str(html).replace('\n','').replace('\r\n','')
+    r.close_phandomjs()

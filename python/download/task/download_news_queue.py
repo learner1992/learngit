@@ -24,11 +24,11 @@ def push_queue_items():
         redis_len=len(redis.get_conn().keys())
         page_size=10
         page_num=redis_len/page_size
-        redis_len = len(redis.get_conn().keys("down*"))
-        sum=0
+        # redis_len = len(redis.get_conn().keys("down*"))
+        # sum=0
         for i in range(0,page_num):
-            redis_key=redis.kyes_limit_scan(patter="down*",limit=page_size*(i+1),cursor=0)
-            sum+=len(redis_key)
+            redis_key=redis.kyes_limit_scan(pattern="down*",limit=page_size*(i+1),cursor=0)
+            # sum+=len(redis_key)
             if len(redis_key) != 0:
                 redis_value = redis.get_values_batch_keys(redis_key)
                 for each in redis_value:
@@ -38,8 +38,8 @@ def push_queue_items():
                 db.commit()
                 redis.delete_batch(redis_key)
             #避免后面无用的扫描
-            if sum==redis_len:
-                break
+            # if sum==redis_len:
+            #     break
         #下面是一下全取出来，没有分页的方法
         # redis_key=redis.get_conn().keys("down*")
         # print redis_key

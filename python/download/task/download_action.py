@@ -14,9 +14,29 @@ from python.common.util.util import Util
 from python.common.util.time_util import TimeUtil
 from python.common.action.queue_producer import Producer
 from python.common.action.queue_consumer import Consumer
-from python.download.util.redis_util import RedisUtil
+from python.common.util.request_util import RequestUtil
+from python.common.util.html_util import HtmlUtil
+from python.download.util.kafka_util import KafkaUtil
+from python.common.util.file_util import FileUtil
+from tld import get_fld
+from python.common.util.time_util import TimeUtil
+import sys,Queue,os,time,re
+from lxml import etree
 queue_name="download_action"
-#把数据放入hainiu_queue,不一定用到，例子
+
+def get_title(Html):
+    '''
+    用re抽取网页Title
+    '''
+    # Html = utf8_transfer(Html)
+    compile_rule = ur'<title>.*</title>'
+    title_list = re.findall(compile_rule, Html)
+    if title_list == []:
+        title = ''
+    else:
+        title = title_list[0][7:-8]
+    return title
+
 class DownloadActionProducer(ProducerAction):
     def __init__(self,limit,fail_times):
         super(self.__class__,self).__init__()
@@ -32,7 +52,7 @@ class DownloadActionProducer(ProducerAction):
         """
         #type=3 已被消费者进程拿取过了
         update_queue_sql = """
-        update hainiu_web_seed set type=3 where id in (%s);
+        update hainiu_queue set type=3 where id in (%s);
         """
         return_list = []
         try:
@@ -50,7 +70,7 @@ class DownloadActionProducer(ProducerAction):
                 return_list.append(c)
             if query_ids:
                 ids = ','.join(query_ids)
-                sql = update_queue_sql % (t.now_time(), ids)
+                sql = update_queue_sql %  ids
                 print t.now_time(), ids
                 d.execute(sql)
         except:
@@ -65,7 +85,7 @@ class DownloadActionConsumer(ConsumerAction):
     def __init__(self,id,action,params):
         super(self.__class__,self).__init__()
         self.id=id
-        self.action=action
+        self.url=action
         self.params=params
         self.rl=LogUtil().get_logger("consumer","consumer"+queue_name)
     def action(self):
@@ -74,27 +94,61 @@ class DownloadActionConsumer(ConsumerAction):
             # 这里应该是进行消费，也就是把hainiu_queue送过来的链接进行爬取url，然后放到hainiu_web_page中
             #并且保存文件到本地，还有推到kafka中
             print self.action, self.params, self.id
-            rl = LogUtil().get_base_logger()
+            r = RequestUtil()
+            hu = HtmlUtil()
+            u = Util()
+            f = FileUtil()
+            t = TimeUtil()
+            db = DBUtil()
+            html = r.http_get_phandomjs(self.url)
+            r.close_phandomjs()
+            charset = hu.get_doc_charset(etree.HTML(html))
+            html = html.decode(charset).encode(sys.getfilesystemencoding())
+            title = get_title(html)
+            print "title:", title
+            html_string = str(html).replace('\n', '').replace('\r\n', '')
+            md5_html_string = u.get_md5(html_string)
+            base_path = config._LOCAL_DATA_DIR % os.sep + 'done'
+            file_path = config._LOCAL_DATA_DIR % os.sep + 'done' + os.sep + md5_html_string
+            # 写文件
+            f.create_path(base_path)
+            f.write_file_content(file_path, md5_html_string + "\001" + html_string)
+            # 推kafka
+            kafka_util = KafkaUtil(config._KAFKA_CONFIG)
+            kafka_util.push_message(html_string)
             try:
-                print "进到消费者线程"
-
+                #把结果记录写入hianiu_web_page中
+                insert_web_page_sql="""
+                insert into hainiu_web_page (url,md5,param,domain,host,title,create_time,
+                create_day,create_hour,update_time) values("%s,"*9,"%s");
+                """
+                create_time = int(t.str2timestamp(t.now_time()))
+                create_day = int(t.now_day().replace("-", ""))
+                create_hour = int(t.now_hour())
+                update_time = int(t.str2timestamp(t.now_time()))
+                sql=insert_web_page_sql %(self.url,md5_html_string,"{title:"+self.params+"}",
+                                          get_fld(self.url),hu.get_url_host(self.url),title,
+                                          create_time,create_day,create_hour,update_time)
+                db.execute(sql)
             except:
-                rl.exception()
+                self.rl.exception()
+                self.rl.error(sql)
+                db.rollback()
             finally:
-                pass
+                db.close()
         except:
             is_success = False
             self.rl.exception()
-        return super(self.__class__, self).result(is_success, [self.id, self.ac, self.params])
+        return super(self.__class__, self).result(is_success, [self.id, self.url, self.params])
 
     def success_action(self, values):
         # 成功了就把hainiu_queue的记录删除
         print "success"
-        update_queue_sql = """
-                update hainiu_web_seed set status=0,last_crawl_time='%s' where id in (%s);
-                """
+        delete_queue_sql = """
+        delete from hainiu_queue where id in (%s);
+        """
         try:
-            sql = update_queue_sql % (TimeUtil().now_time(), self.id)
+            sql = delete_queue_sql %  values[0]
             db = DBUtil(config._OGC_DB)
             db.execute(sql)
         except:
@@ -107,10 +161,10 @@ class DownloadActionConsumer(ConsumerAction):
     def fail_action(self, values):
         #失败了就将记录type恢复为2，并累加fail_times
         update_sql = """
-                update hainiu_web_seed set fail_times=fail_times+1,fail_ip='%s' where id=%s;
+                update hainiu_queue set fail_times=fail_times+1,fail_ip='%s' where id=%s;
                 """
         update_sql1 = """
-                update hainiu_web_seed set status=0,last_crawl_time='' where id =%s
+                update hainiu_queue set status=0,last_crawl_time='' where id =%s
                 """
         try:
             d = DBUtil(config._OGC_DB)
@@ -118,7 +172,9 @@ class DownloadActionConsumer(ConsumerAction):
             u = Util
             ip = u.get_local_ip()
             sql = update_sql % (ip, id)
+            d.execute(sql)
             d.execute_no_commit(sql)
+            #超过单机器尝试次数，工作状态置为不工作
             if (self.try_num == Consumer.work_try_num):
                 sql = update_sql1 % id
                 d.execute_no_commit(sql)
@@ -129,3 +185,10 @@ class DownloadActionConsumer(ConsumerAction):
         finally:
             d.close()
 
+if __name__=='__main__':
+    reload(sys)
+    sys.setdefaultencoding('utf-8')
+    q=Queue.Queue()
+    pp=DownloadActionProducer(20,6)
+    p=Producer(q,pp,queue_name,2,2,2,3)
+    p.start_work()

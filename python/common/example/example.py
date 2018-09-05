@@ -5,7 +5,7 @@ Created on 2018/9/2 23:37
 Copyright (c) 2018/9/2.
 @author: ogc
 """
-import mx.URL,sys
+import mx.URL,sys,re
 from tld import get_tld,get_fld
 from bs4 import BeautifulSoup
 from python.common.util.request_util import RequestUtil
@@ -15,12 +15,13 @@ from lxml import etree
 
 def test_beautiful():
     # url='http://roll.news.qq.com'
-    # url='http://www.baidu.com'
-    url='http://roll.mil.news.sina.com.cn/col/zgjq/index/shtml'
+    url='http://www.baidu.com'
+    # url='http://roll.mil.news.sina.com.cn/col/zgjq/index/shtml'
 
     r=RequestUtil()
     hu=HtmlUtil()
     html=r.http_get_phandomjs(url)
+    print get_title(html)
     # domain=get_tld(url)
     domain=get_fld(url)
     host=hu.get_url_host(url)
@@ -80,9 +81,23 @@ def get_format_url(url, a_doc, host):
         a_href = a_href[:a_href.index('?') + 1] + a_params_str
 
     return a_href
+def get_title(Html):
+    '''
+    用re抽取网页Title
+    '''
+    # Html = utf8_transfer(Html)
+    compile_rule = ur'<title>.*</title>'
+    title_list = re.findall(compile_rule, Html)
+    if title_list == []:
+        title = ''
+    else:
+        title = title_list[0][7:-8]
+    return title
 
 if __name__=="__main__":
     reload(sys)
     sys.setdefaultencoding('utf-8')
+    # print get_title("https://blog.csdn.net/zmx729618/article/details/54093532")
     test_beautiful()
+
 
