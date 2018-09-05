@@ -155,23 +155,24 @@ class DownloadActionConsumer(ConsumerAction):
             db.close()
 
     def fail_action(self, values):
+        print "come in fail_action"
         #失败了就将记录type恢复为2，并累加fail_times
         update_sql = """
                 update hainiu_queue set fail_times=fail_times+1,fail_ip='%s' where id=%s;
                 """
         update_sql1 = """
-                update hainiu_queue set status=0,last_crawl_time='' where id =%s
+                update hainiu_queue set type=2 where id =%s
                 """
         try:
             d = DBUtil(config._OGC_DB)
             id = values[0]
-            u = Util
+            u = Util()
             ip = u.get_local_ip()
             sql = update_sql % (ip, id)
             d.execute(sql)
             d.execute_no_commit(sql)
             #超过单机器尝试次数，工作状态置为不工作
-            if (self.try_num == Consumer.work_try_num):
+            if (self.try_num == Consumer._WORK_TRY_NUM):
                 sql = update_sql1 % id
                 d.execute_no_commit(sql)
             d.commit()

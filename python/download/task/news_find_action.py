@@ -201,7 +201,7 @@ class NewsFindQueueConsumer(ConsumerAction):
             # 插入两条数据，如果数据已经存在了就pass，如果数据不存在就插入hainiu_queue中
             rl = LogUtil().get_base_logger()
             try:
-                print "进到消费者线程"
+                print "come in consumer thread"
                 call_beautiful(self.url)
             except:
                 rl.exception()
@@ -242,19 +242,19 @@ class NewsFindQueueConsumer(ConsumerAction):
     def fail_action(self,values):
         #失败之后恢复type为0，以便让其他线程继续访问
         update_sql="""
-        update hainiu_web_seed set fail_times=fail_times+1,fail_ip='%s' where id=%s;
+        update hainiu_queue set fail_times=fail_times+1,fail_ip='%s' where id=%s;
         """
         update_sql1="""
-        update hainiu_web_seed set status=0,last_crawl_time='' where id =%s
+        update hainiu_queue set type=0 where id =%s
         """
         try:
             d=DBUtil(config._OGC_DB)
             id=values[0]
-            u=Util
+            u=Util()
             ip=u.get_local_ip()
             sql=update_sql % (ip,id)
             d.execute_no_commit(sql)
-            if(self.try_num==Consumer.work_try_num):
+            if(self.try_num==Consumer._WORK_TRY_NUM):
                 sql=update_sql1 % id
                 d.execute_no_commit(sql)
             d.commit()

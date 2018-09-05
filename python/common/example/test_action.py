@@ -97,7 +97,7 @@ class OGCConsumer(ConsumerAction):
         try:
             d=DBUtil(config._OGC_DB)
             id=values[0]
-            u=Util
+            u=Util()
             ip=u.get_local_ip()
             sql=update_sql % (ip,id)
             d.execute_no_commit(sql)
