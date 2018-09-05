@@ -39,7 +39,7 @@ def date_merge():
                 for line in f:
                     try:
                         total += 1
-                        line = line.strip().encode('utf-8')
+                        line = line.strip().encode('UNICODE')
                         if not line:
                             continue
                         md5 = line[:line.find('\001')]

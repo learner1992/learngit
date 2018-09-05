@@ -72,7 +72,6 @@ def call_beautiful(url):
                         a_host,a_xpath,a_title,create_time,create_day,create_hour,update_time) 
                         values("%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s") on duplicate key update update_time=update_time +1;
                         """
-                        #values("%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s");
                         sql=insert_internal_sql %(url,u.get_md5(url),"{title:"+a.text+"}",domain,host,a_href,u.get_md5(a_href),
                                                   hu.get_url_host(a_href),xpath,a.text,create_time,create_day,create_hour,update_time)
                         db.execute(sql)
