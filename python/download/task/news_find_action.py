@@ -65,11 +65,12 @@ def call_beautiful(url):
                     redis.set_batch_datas(dicts)
                     #同时写入mysql-internal数据库保存信息
                     try:
+                        sql=''
                         db=DBUtil(config._OGC_DB)
                         insert_internal_sql="""
                         insert into hainiu_web_seed_internally (url,md5,param,domain,host,a_url,a_md5,
                         a_host,a_xpath,a_title,create_time,create_day,create_hour,update_time) 
-                        values("%s," * 13,"%s") on duplicate key update update_time=update_time +1;
+                        values("%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s") on duplicate key update update_time=update_time +1;
                         """
                         #values("%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s");
                         sql=insert_internal_sql %(url,u.get_md5(url),"{title:"+a.text+"}",domain,host,a_href,u.get_md5(a_href),
@@ -87,10 +88,10 @@ def call_beautiful(url):
                 insert_external_sql="""
                 insert into hainiu_web_seed_externally (url,md5,param,domain,host,a_url,a_md5,
                         a_host,a_xpath,a_title,create_time,create_day,create_hour,update_time) 
-                        values("%s," *13 ,"%s") on duplicate key update update_time=update_time +1;
+                        values("%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s","%s") on duplicate key update update_time=update_time +1;
                         """
-                sql = insert_external_sql % (url, u.get_md5(url), a.text, domain, host, a_href, u.get_md5(a_href),
-                                             hu.get_url_host(a_href), xpath, a.text,create_time,create_day,create_hour,update_time)
+                sql = insert_external_sql % (url,u.get_md5(url),"{title:"+a.text+"}",domain,host,a_href,u.get_md5(a_href),
+                                                  hu.get_url_host(a_href),xpath,a.text,create_time,create_day,create_hour,update_time)
                 try:
                     db.execute(sql)
                 except:
@@ -212,11 +213,24 @@ class NewsFindQueueConsumer(ConsumerAction):
         return super(self.__class__,self).result(is_success,[self.id,self.url,self.params])
     def success_action(self,values):
         #成功之后应该删除hainiu_queue表中的数据,这里为了测试方便先修改状态，之后改成删除
-        update_queue_sql = """
-        update hainiu_web_seed set status=0,last_crawl_time='%s' where id in (%s);
+        # update_queue_sql = """
+        # update hainiu_web_seed set status=0,last_crawl_time='%s' where id in (%s);
+        # """
+        # try:
+        #     sql = update_queue_sql % (TimeUtil().now_time(), self.id)
+        #     db = DBUtil(config._OGC_DB)
+        #     db.execute(sql)
+        # except:
+        #     self.rl.exception()
+        #     self.rl.error(sql)
+        #     db.rollback()
+        # finally:
+        #     db.close()
+        delete_queue_sql = """
+        delete from hainiu_queue where id in (%s);
         """
         try:
-            sql = update_queue_sql % (TimeUtil().now_time(), self.id)
+            sql = delete_queue_sql %  values[0]
             db = DBUtil(config._OGC_DB)
             db.execute(sql)
         except:

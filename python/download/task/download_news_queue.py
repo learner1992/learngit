@@ -28,11 +28,10 @@ def push_queue_items():
         # sum=0
         for i in range(0,page_num):
             redis_key=redis.kyes_limit_scan(pattern="down*",limit=page_size*(i+1),cursor=0)
-            # sum+=len(redis_key)
             if len(redis_key) != 0:
                 redis_value = redis.get_values_batch_keys(redis_key)
                 for each in redis_value:
-                    print redis_value
+                    print each
                     sql=insert_queue_sql%(each)
                     db.execute_no_commit(sql)
                 db.commit()

@@ -71,7 +71,6 @@ class DownloadActionProducer(ProducerAction):
             if query_ids:
                 ids = ','.join(query_ids)
                 sql = update_queue_sql %  ids
-                print t.now_time(), ids
                 d.execute(sql)
         except:
             self.rl.exception()
@@ -93,19 +92,17 @@ class DownloadActionConsumer(ConsumerAction):
         try:
             # 这里应该是进行消费，也就是把hainiu_queue送过来的链接进行爬取url，然后放到hainiu_web_page中
             #并且保存文件到本地，还有推到kafka中
-            print self.action, self.params, self.id
             r = RequestUtil()
             hu = HtmlUtil()
             u = Util()
             f = FileUtil()
             t = TimeUtil()
-            db = DBUtil()
+            db = DBUtil(config._OGC_DB)
             html = r.http_get_phandomjs(self.url)
             r.close_phandomjs()
             charset = hu.get_doc_charset(etree.HTML(html))
             html = html.decode(charset).encode(sys.getfilesystemencoding())
-            title = get_title(html)
-            print "title:", title
+            title = get_title(html).decode(sys.getfilesystemencoding())
             html_string = str(html).replace('\n', '').replace('\r\n', '')
             md5_html_string = u.get_md5(html_string)
             base_path = config._LOCAL_DATA_DIR % os.sep + 'done'
@@ -120,7 +117,7 @@ class DownloadActionConsumer(ConsumerAction):
                 #把结果记录写入hianiu_web_page中
                 insert_web_page_sql="""
                 insert into hainiu_web_page (url,md5,param,domain,host,title,create_time,
-                create_day,create_hour,update_time) values("%s,"*9,"%s");
+                create_day,create_hour,update_time) values("%s","%s","%s","%s","%s","%s","%s","%s","%s","%s");
                 """
                 create_time = int(t.str2timestamp(t.now_time()))
                 create_day = int(t.now_day().replace("-", ""))
@@ -143,7 +140,6 @@ class DownloadActionConsumer(ConsumerAction):
 
     def success_action(self, values):
         # 成功了就把hainiu_queue的记录删除
-        print "success"
         delete_queue_sql = """
         delete from hainiu_queue where id in (%s);
         """
